@@ -10,7 +10,7 @@ import {
   bundleResourceIO,
   cameraWithTensors,
 } from "@tensorflow/tfjs-react-native";
-import Svg, { Circle,Line } from "react-native-svg";
+import Svg, { Circle,Line,Text as TextSVG  } from "react-native-svg";
 import { ExpoWebGLRenderingContext } from "expo-gl";
 import { CameraType } from "expo-camera/build/Camera.types";
 
@@ -237,18 +237,87 @@ const lines = connections.map((connection, index) => {
     />
   );
 });
-
 // Filter out any null elements before rendering
 const validLines = lines.filter(line => line != null);
 
+//calculate the angle bewteen arm and the body
+const leftShoulder = keypoints[5];
+const rightShoulder = keypoints[6];
+const rightElbow = keypoints[8];
+const leftHip = keypoints[11];
+const rightHip = keypoints[12];
+const leftKnee = keypoints[13];
+const rightKnee = keypoints[14];
+//
+function calculateAngle(A, B, C) {
+  const AB = { x: B.x - A.x, y: B.y - A.y };
+  const BC = { x: C.x - B.x, y: C.y - B.y };
+
+  const dotProduct = (AB.x * BC.x) + (AB.y * BC.y);
+  const magnitudeAB = Math.sqrt(AB.x * AB.x + AB.y * AB.y);
+  const magnitudeBC = Math.sqrt(BC.x * BC.x + BC.y * BC.y);
+  const angle = Math.acos(dotProduct / (magnitudeAB * magnitudeBC));
+
+  return angle * (180 / Math.PI); // convert radians to degrees
+}
+// console.log(rightAnkle);
+// Extract the coordinates from the keypoints
+var angleText = "0°";
+var angleTextPosition = { x: 0, y: 0 };``
+
+
+let shoulderPoint, kneePoint, hipPoint;
+
+// Check if the right side points are available
+if (rightShoulder && rightKnee && rightHip) {
+  shoulderPoint = { x: rightShoulder.props.cx, y: rightShoulder.props.cy };
+  kneePoint = { x: rightKnee.props.cx, y: rightKnee.props.cy };
+  hipPoint = { x: rightHip.props.cx, y: rightHip.props.cy };
+}
+
+// Check if the left side points are available and right side is not available
+else if (leftShoulder && leftKnee && leftHip) {
+  shoulderPoint = { x: leftShoulder.props.cx, y: leftShoulder.props.cy };
+  kneePoint = { x: leftKnee.props.cx, y: leftKnee.props.cy };
+  hipPoint = { x: leftHip.props.cx, y: leftHip.props.cy };
+}
+
+// If we have a complete set of points, calculate the angle
+if (shoulderPoint && kneePoint && hipPoint) {
+  const armAngle = calculateAngle(shoulderPoint, kneePoint, hipPoint);
+  angleText = `${armAngle.toFixed(2)}°`;
+// Choose a suitable position for the text on the SVG
+  angleTextPosition = {
+    x: (shoulderPoint.x + hipPoint.x) / 2,
+    y: (shoulderPoint.y + hipPoint.y) / 2
+  };
+}
+
+
+
+
 return (
+  
   <Svg style={styles.svg}>
+    <TextSVG
+      x={angleTextPosition.x} 
+      y={angleTextPosition.y}
+      fill="#ff0000"
+      fontSize="25"
+      textAnchor="middle">
+      {angleText}
+      </TextSVG>
+
+
     {keypoints}
     {validLines}
   </Svg>
 );
     } else {
-      return <View></View>;
+      return <View>
+
+
+      </View>;
     }
   };
 
