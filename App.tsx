@@ -84,10 +84,10 @@ export default function App() {
       // Wait for tfjs to initialize the backend.
       await tf.ready();
 
-      // Load movenet model.
+      // Load movenet model. SINGLEPOSE_LIGHTNING
       // https://github.com/tensorflow/tfjs-models/tree/master/pose-detection
       const movenetModelConfig: posedetection.MoveNetModelConfig = {
-        modelType: posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+        modelType: posedetection.movenet.modelType.SINGLEPOSE_THUNDER,
         enableSmoothing: true,
       };
       if (LOAD_MODEL_FROM_BUNDLE) {
@@ -282,7 +282,7 @@ else if (leftShoulder && leftKnee && leftHip) {
   hipPoint = { x: leftHip.props.cx, y: leftHip.props.cy };
 }
 
-// If we have a complete set of points, calculate the angle
+// If we have a complete set of points,r calculate the angle
 if (shoulderPoint && kneePoint && hipPoint) {
   const armAngle = calculateAngle(shoulderPoint, kneePoint, hipPoint);
   angleText = `${armAngle.toFixed(2)}°`;
