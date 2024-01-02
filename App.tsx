@@ -14,6 +14,30 @@ import Svg, { Circle,Line,Text as TextSVG  } from "react-native-svg";
 import { ExpoWebGLRenderingContext } from "expo-gl";
 import { CameraType } from "expo-camera/build/Camera.types";
 
+import * as Speech from 'expo-speech';
+const speak = () => {
+  const thingToSay = 'Please do not bend your back';
+  Speech.speak(thingToSay);
+};
+
+const connections = [
+  { from: 0, to: 1 }, // nose to left eye
+  { from: 0, to: 2 }, // nose to right eye
+  { from: 1, to: 3 }, // left eye to left ear
+  { from: 2, to: 4 }, // right eye to right ear
+  { from: 5, to: 6 }, // left shoulder to right shoulder
+  { from: 5, to: 7 }, // left shoulder to left elbow
+  { from: 6, to: 8 }, // right shoulder to right elbow
+  { from: 7, to: 9 }, // left elbow to left wrist
+  { from: 8, to: 10 }, // right elbow to right wrist
+  { from: 5, to: 11 }, // left shoulder to left hip
+  { from: 6, to: 12 }, // right shoulder to right hip
+  { from: 11, to: 12 }, // left hip to right hip
+  { from: 11, to: 13 }, // left hip to left knee
+  { from: 12, to: 14 }, // right hip to right knee
+  { from: 13, to: 15 }, // left knee to left ankle
+  { from: 14, to: 16 }, // right knee to right ankle
+];
 // tslint:disable-next-line: variable-name
 const TensorCamera = cameraWithTensors(Camera);
 
@@ -187,58 +211,41 @@ export default function App() {
         });
 
       // Define the connections based on the keypoints order
-      const connections = [
-        { from: 0, to: 1 }, // nose to left eye
-        { from: 0, to: 2 }, // nose to right eye
-        { from: 1, to: 3 }, // left eye to left ear
-        { from: 2, to: 4 }, // right eye to right ear
-        { from: 5, to: 6 }, // left shoulder to right shoulder
-        { from: 5, to: 7 }, // left shoulder to left elbow
-        { from: 6, to: 8 }, // right shoulder to right elbow
-        { from: 7, to: 9 }, // left elbow to left wrist
-        { from: 8, to: 10 }, // right elbow to right wrist
-        { from: 5, to: 11 }, // left shoulder to left hip
-        { from: 6, to: 12 }, // right shoulder to right hip
-        { from: 11, to: 12 }, // left hip to right hip
-        { from: 11, to: 13 }, // left hip to left knee
-        { from: 12, to: 14 }, // right hip to right knee
-        { from: 13, to: 15 }, // left knee to left ankle
-        { from: 14, to: 16 }, // right knee to right ankle
-      ];
+
 
 // Assuming 'keypoints' is an array of your <Circle> components representing the keypoints
 // console.log("Keypoints array:", keypoints);
 
-const lines = connections.map((connection, index) => {
-  const startCircle = keypoints[connection.from];
-  const endCircle = keypoints[connection.to];
+// const lines = connections.map((connection, index) => {
+//   const startCircle = keypoints[connection.from];
+//   const endCircle = keypoints[connection.to];
 
-  if (!startCircle || !endCircle) {
-    // console.warn(`Undefined Circle element at index: from=${connection.from}, to=${connection.to}`);
-    return null; // Skip rendering this line if the keypoints are not found
-  }
+//   if (!startCircle || !endCircle) {
+//     // console.warn(`Undefined Circle element at index: from=${connection.from}, to=${connection.to}`);
+//     return null; // Skip rendering this line if the keypoints are not found
+//   }
 
-  // console.log(`Line ${index} startCircle:`, startCircle);
-  // console.log(`Line ${index} endCircle:`, endCircle);
+//   // console.log(`Line ${index} startCircle:`, startCircle);
+//   // console.log(`Line ${index} endCircle:`, endCircle);
 
-  // Extract the cx and cy attributes from the props of the Circle components
-  const { cx: startX, cy: startY } = startCircle.props;
-  const { cx: endX, cy: endY } = endCircle.props;
+//   // Extract the cx and cy attributes from the props of the Circle components
+//   const { cx: startX, cy: startY } = startCircle.props;
+//   const { cx: endX, cy: endY } = endCircle.props;
 
-  return (
-    <Line
-      key={`line_${index}`}
-      x1={startX}
-      y1={startY}
-      x2={endX}
-      y2={endY}
-      stroke="#FFFFFF"
-      strokeWidth="2"
-    />
-  );
-});
-// Filter out any null elements before rendering
-const validLines = lines.filter(line => line != null);
+//   return (
+//     <Line
+//       key={`line_${index}`}
+//       x1={startX}
+//       y1={startY}
+//       x2={endX}
+//       y2={endY}
+//       stroke="#FFFFFF"
+//       strokeWidth="2"
+//     />
+//   );
+// });
+// // Filter out any null elements before rendering
+// const validLines = lines.filter(line => line != null);
 
 //calculate the angle bewteen arm and the body
 const leftShoulder = keypoints[5];
@@ -284,8 +291,12 @@ else if (leftShoulder && leftKnee && leftHip) {
 
 // If we have a complete set of points,r calculate the angle
 if (shoulderPoint && kneePoint && hipPoint) {
-  const armAngle = calculateAngle(shoulderPoint, kneePoint, hipPoint);
-  angleText = `${armAngle.toFixed(2)}°`;
+  const backAngle = calculateAngle(shoulderPoint, kneePoint, hipPoint);
+  if(backAngle>160){
+
+    speak();
+  }
+  angleText = `${backAngle.toFixed(2)}°`;
 // Choose a suitable position for the text on the SVG
   angleTextPosition = {
     x: (shoulderPoint.x + hipPoint.x) / 2,
@@ -294,6 +305,7 @@ if (shoulderPoint && kneePoint && hipPoint) {
 }
 
 
+// {validLines}
 
 
 return (
@@ -310,103 +322,15 @@ return (
 
 
     {keypoints}
-    {validLines}
   </Svg>
 );
     } else {
       return <View>
 
-
       </View>;
     }
   };
 
-  //   if (poses != null && poses.length > 0) {
-  //     const keypoints = poses[0].keypoints
-  //       .filter(k => (k.score ?? 0) > MIN_KEYPOINT_SCORE);
-
-  //     const flipX = IS_ANDROID || cameraType === Camera.Constants.Type.back;
-
-  //     // Create an array to hold the rendered Circle and Line components
-  //     const poseComponents = [];
-
-  //     // Loop through each keypoint to create a Circle component
-  //     keypoints.forEach(k => {
-  //       const x = flipX ? getOutputTensorWidth() - k.x : k.x;
-  //       const y = k.y;
-  //       const cx =
-  //         (x / getOutputTensorWidth()) *
-  //         (isPortrait() ? CAM_PREVIEW_WIDTH : CAM_PREVIEW_HEIGHT);
-  //       const cy =
-  //         (y / getOutputTensorHeight()) *
-  //         (isPortrait() ? CAM_PREVIEW_HEIGHT : CAM_PREVIEW_WIDTH);
-
-  //       poseComponents.push(
-  //         <Circle
-  //           key={`keypoint_${k.name}`}
-  //           cx={cx}
-  //           cy={cy}
-  //           r="4"
-  //           strokeWidth="2"
-  //           fill="##aa0000"
-  //           stroke="white"
-  //         />
-  //       );
-  //     });
-
-  //     // Define the connections between keypoints, based on the pose model you are using
-  //     // For example, if you are using a simple model with keypoints "head", "shoulder", "elbow", "wrist":
-  //     const connections = [
-  //       ['head', 'shoulder'],
-  //       ['shoulder', 'elbow'],
-  //       ['elbow', 'wrist'],
-  //       // Add more connections based on your keypoints
-  //     ];
-
-  //     // Loop through each connection to create a Line component
-  //     connections.forEach(([startName, endName]) => {
-  //       const startKeypoint = keypoints.find(k => k.name === startName);
-  //       const endKeypoint = keypoints.find(k => k.name === endName);
-
-  //       if (startKeypoint && endKeypoint) {
-  //         const startX = flipX ? getOutputTensorWidth() - startKeypoint.x : startKeypoint.x;
-  //         const startY = startKeypoint.y;
-  //         const endX = flipX ? getOutputTensorWidth() - endKeypoint.x : endKeypoint.x;
-  //         const endY = endKeypoint.y;
-
-  //         const cxStart =
-  //           (startX / getOutputTensorWidth()) *
-  //           (isPortrait() ? CAM_PREVIEW_WIDTH : CAM_PREVIEW_HEIGHT);
-  //         const cyStart =
-  //           (startY / getOutputTensorHeight()) *
-  //           (isPortrait() ? CAM_PREVIEW_HEIGHT : CAM_PREVIEW_WIDTH);
-
-  //         const cxEnd =
-  //           (endX / getOutputTensorWidth()) *
-  //           (isPortrait() ? CAM_PREVIEW_WIDTH : CAM_PREVIEW_HEIGHT);
-  //         const cyEnd =
-  //           (endY / getOutputTensorHeight()) *
-  //           (isPortrait() ? CAM_PREVIEW_HEIGHT : CAM_PREVIEW_WIDTH);
-
-  //         poseComponents.push(
-  //           <Line
-  //             key={`line_${startName}_${endName}`}
-  //             x1={cxStart}
-  //             y1={cyStart}
-  //             x2={cxEnd}
-  //             y2={cyEnd}
-  //             stroke="#FFFFFF"
-  //             strokeWidth="2"
-  //           />
-  //         );
-  //       }
-  //     });
-
-  //     return <Svg style={styles.svg}>{poseComponents}</Svg>;
-  //   } else {
-  //     return <View></View>;
-  //   }
-  // };
   const renderFps = () => {
     return (
       <View style={styles.fpsContainer}>
