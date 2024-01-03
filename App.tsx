@@ -15,10 +15,7 @@ import { ExpoWebGLRenderingContext } from "expo-gl";
 import { CameraType } from "expo-camera/build/Camera.types";
 
 import * as Speech from 'expo-speech';
-const speak = () => {
-  const thingToSay = 'Please do not bend your back';
-  Speech.speak(thingToSay);
-};
+
 
 const connections = [
   { from: 0, to: 1 }, // nose to left eye
@@ -70,6 +67,18 @@ const AUTO_RENDER = false;
 
 // Whether to load model from app bundle (true) or through network (false).
 const LOAD_MODEL_FROM_BUNDLE = false;
+let isSpeaking = false; // Track the speaking state
+
+const speak = (text) => {
+  if (!isSpeaking) {
+    isSpeaking = true;
+    Speech.speak(text, {
+      onDone: () => {
+        isSpeaking = false; // Reset the speaking state when speech is done
+      },
+    });
+  }
+};
 
 export default function App() {
   const cameraRef = useRef(null);
@@ -292,10 +301,17 @@ else if (leftShoulder && leftKnee && leftHip) {
 // If we have a complete set of points,r calculate the angle
 if (shoulderPoint && kneePoint && hipPoint) {
   const backAngle = calculateAngle(shoulderPoint, kneePoint, hipPoint);
-  if(backAngle>160){
 
-    speak();
+  if(backAngle<160){
+
+    speak('Please do not bend your back');
+  }else {
+    if (isSpeaking) {
+      Speech.stop(); // Stop speech if angle is below 160
+      isSpeaking = false; // Reset the speaking state
+    }
   }
+
   angleText = `${backAngle.toFixed(2)}°`;
 // Choose a suitable position for the text on the SVG
   angleTextPosition = {
